@@ -16,11 +16,9 @@ static const char woody_template[] =
     "    printf(\"....WOODY....\\n\");\n"
     "    fflush(stdout);\n"
     "    \n"
-    "    // Read encrypted binary from embedded data\n"
     "    FILE *self = fopen(\"/proc/self/exe\", \"rb\");\n"
     "    if (!self) { perror(\"fopen self\"); exit(1); }\n"
     "    \n"
-    "    // Seek to the embedded binary data (after the C program)\n"
     "    fseek(self, -%zu, SEEK_END);\n"
     "    \n"
     "    unsigned char *binary_data = malloc(%zu);\n"
@@ -31,12 +29,10 @@ static const char woody_template[] =
     "    }\n"
     "    fclose(self);\n"
     "    \n"
-    "    // Decrypt the text section\n"
     "    for (size_t i = 0; i < text_size; i++) {\n"
     "        binary_data[text_offset + i] ^= decryption_key[i %% 16];\n"
     "    }\n"
     "    \n"
-    "    // Write decrypted binary to temporary file\n"
     "    char temp_path[] = \"/tmp/woody_temp_XXXXXX\";\n"
     "    int fd = mkstemp(temp_path);\n"
     "    if (fd == -1) { perror(\"mkstemp\"); exit(1); }\n"
@@ -48,7 +44,6 @@ static const char woody_template[] =
     "    close(fd);\n"
     "    chmod(temp_path, 0755);\n"
     "    \n"
-    "    // Execute the decrypted binary\n"
     "    execl(temp_path, temp_path, (char *)NULL);\n"
     "    perror(\"exec\"); unlink(temp_path); exit(1);\n"
     "}\n"
@@ -63,10 +58,8 @@ char *key_to_c_array(unsigned char *key)
     char *result = malloc(KEY_LENGTH * 6 + 20);
     if (!result)
         return NULL;
-
     char *ptr = result;
     ptr += sprintf(ptr, "    ");
-
     for (int i = 0; i < KEY_LENGTH; i++)
     {
         if (i > 0)
@@ -135,7 +128,6 @@ int create_woody(t_elf *original, const char *output_name, t_encryption_info *en
     }
 
     fclose(source_file);
-
     encrypted_file = fopen("woody_temp.bin", "wb");
     if (!encrypted_file)
     {
@@ -153,10 +145,8 @@ int create_woody(t_elf *original, const char *output_name, t_encryption_info *en
     }
 
     fclose(encrypted_file);
-
     char compile_cmd[256];
     snprintf(compile_cmd, sizeof(compile_cmd), "gcc -o woody_temp woody_temp.c");
-
     if (system(compile_cmd) != 0)
     {
         printf("Error: Failed to compile woody binary\n");
@@ -192,9 +182,7 @@ int create_woody(t_elf *original, const char *output_name, t_encryption_info *en
             break;
         }
     }
-
     fclose(temp_woody);
-
     if (ret == 0)
     {
         if (fwrite(encrypted_binary, 1, original->size, woody_file) != original->size)
@@ -203,9 +191,7 @@ int create_woody(t_elf *original, const char *output_name, t_encryption_info *en
             ret = -1;
         }
     }
-
     fclose(woody_file);
-
     if (ret == 0)
         chmod(output_name, 0755);
 
